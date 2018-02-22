@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package myproto;
+
+enum PhoneType {
+     MOBILE = 0;
+     HOME = 1;
+     WORK = 2;
+}
+
+message PhoneNumber {
+        string number = 1;
+        PhoneType type = 2;
+}
+
+message Person {
+        int32 id = 1;
+        string name = 2;
+        string email = 3;
+        repeated PhoneNumber phones = 4;
+}
+
+message AddressBook {
+        repeated Person people = 1;
+}
+
+
+message AddPersonRequest {
+        Person person = 1;
+}
+
+message AddPersonResponse {
+        int32 id = 1;
+}
+
+service AddressBookStore {
+        rpc AddPerson(AddPersonRequest) returns(AddPersonResponse);
+}

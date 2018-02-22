@@ -1,0 +1,13 @@
+[sender]
+trans_addr = "59.110.12.72:6000"
+flush_interval = 5
+max_sleep_time = 30
+
+[[user_script]]
+path = "/home/bingan/user.py"
+step = 3
+
+[[user_script]]
+path = "/home/bingan/redis.py"
+step = 10
+

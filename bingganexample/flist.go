@@ -1,0 +1,19 @@
+package main
+
+import "fmt"
+
+func main() {
+	var flist []func()
+	var i int
+	for i = 0; i < 3; i++ {
+		flist = append(flist, func() {
+			fmt.Println(&i)
+			fmt.Println(i)
+		})
+	}
+
+	fmt.Println("i=", i)
+	for _, f := range flist {
+		f()
+	}
+}
