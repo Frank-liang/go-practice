@@ -4,6 +4,9 @@ import (
 	"fmt"
 )
 
+//The slice type is an abstraction built on top of Go's array type
+//Array their most common purpose in Go is to hold storage for a slice
+
 func main() {
 	//典型数组初始化赋值
 	var a [3]int = [3]int{1, 2, 3}

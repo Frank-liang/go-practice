@@ -1,5 +1,6 @@
 package main
 
+//Strings are actually very simple: they are just read-only slices of bytes with a bit of extra syntactic support from the language
 //1 First method
 import (
 	"fmt"
