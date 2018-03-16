@@ -3,8 +3,7 @@ title: Golang 新手可能会踩的 50 个坑
 date: 2018-03-07 12:15:00
 tags: Golang
 ---
-
-原文：[50 Shades of Go: Traps, Gotchas, and Common Mistakes](http://devs.cloudimmunity.com/gotchas-and-common-mistakes-in-go-golang/)，翻译已获作者 [kcqon](https://twitter.com/kcqon) 授权。
+COPY FROM "wuYinBest/blog"
 
 <!-- more -->
 
@@ -2623,8 +2622,8 @@ func main() {
 
 ## 总结
 
-感谢原作者 [kcqon](https://twitter.com/kcqon) 总结的这篇博客，让我受益匪浅。
 
-由于译者水平有限，不免出现理解失误，望读者在下评论区指出，不胜感激。
+COPY FROM "wuYinBest/blog"
 
-后续再更新类似高质量文章的翻译 😍
+
+
