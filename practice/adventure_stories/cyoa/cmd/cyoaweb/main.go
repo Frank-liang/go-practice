@@ -5,6 +5,8 @@ import (
 	"flag"
 	"fmt"
 	"os"
+
+	"github.com/Frank-liang/go/practice/adventure_stories/cyoa"
 )
 
 func main() {
