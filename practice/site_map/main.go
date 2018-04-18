@@ -43,7 +43,7 @@ func get(urlStr string) []string {
 	}
 	base := baseUrl.String()
 
-	return hrefs(resp.Body, base)
+	return filter(hrefs(resp.Body, base), withPrefix(base))
 }
 
 func hrefs(r io.Reader, base string) []string {
@@ -58,4 +58,33 @@ func hrefs(r io.Reader, base string) []string {
 		}
 	}
 	return ret
+}
+
+/*  First method
+func filter(base string, links []string) []string {
+	var ret []string
+	for _, link := range links {
+		if strings.HasPrefix(link, base) {
+			ret = append(ret, link)
+		}
+	}
+	return ret
+}
+*/
+
+// The last two funcs are the second method
+func filter(links []string, keepFn func(string) bool) []string {
+	var ret []string
+	for _, link := range links {
+		if keepFn(link) {
+			ret = append(ret, link)
+		}
+	}
+	return ret
+}
+
+func withPrefix(pfx string) func(string) bool {
+	return func(link string) bool {
+		return strings.HasPrefix(link, pfx)
+	}
 }
