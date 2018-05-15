@@ -12,7 +12,7 @@ func main() {
 		fmt.Scan(&a[j])
 	}
 	for i := len(a) - 1; i >= 0; i-- {
-		fmt.Printf("%d", a[i])
+		fmt.Printf("%d ", a[i])
 	}
 	fmt.Printf("\n")
 }
