@@ -3,15 +3,13 @@ package main
 import "fmt"
 
 func main() {
-	var flist []func()
+	x, y := 1, 2
 
-	for i := 0; i < 3; i++ {
-		flist = append(flist, func() {
-			fmt.Println(i)
-		})
-	}
+	defer func(a int) {
+		fmt.Printf("x:%d,y:%d\n", a, y) // y 为闭包引用
+	}(y) // 复制 x 的值
 
-	for _, f := range flist {
-		f()
-	}
+	x += 100
+	y += 100
+	fmt.Println(x, y)
 }
