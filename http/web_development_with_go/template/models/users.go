@@ -74,10 +74,13 @@ func NewUserService(conectionInfo string) (UserService, error) {
 	if err != nil {
 		return nil, err
 	}
+	hmac := hash.NewHMAC(hmacSecretKey)
+	uv := &userValidator{
+		hmac:   hmac,
+		UserDB: ug,
+	}
 	return &userService{
-		UserDB: &userValidator{
-			UserDB: ug,
-		},
+		UserDB: uv,
 	}, nil
 }
 
@@ -89,6 +92,7 @@ type userService struct {
 
 type userValidator struct {
 	UserDB
+	hmac hash.HMAC
 }
 
 var _ UserDB = &userGorm{}
@@ -129,14 +133,13 @@ func (ug *userGorm) ByEmail(email string) (*User, error) {
 }
 
 // ByRemember looks up a user with the given remember token
-// and returns that user. This method will handle hashing
-// the token for ug.
+// and returns that user. This method expects the remember
+// token to already be hashed.
 // Errors are the same as ByEmail.
 
-func (ug *userGorm) ByRemember(token string) (*User, error) {
+func (ug *userGorm) ByRemember(rememberHash string) (*User, error) {
 	var user User
-	RememberHash := ug.hmac.Hash(token)
-	err := first(ug.db.Where("remember_hash = ?", RememberHash), &user)
+	err := first(ug.db.Where("remember_hash = ?", rememberHash), &user)
 	if err != nil {
 		return nil, err
 	}
@@ -231,4 +234,9 @@ func (ug *userService) Authenticate(email, password string) (*User, error) {
 
 	}
 
+}
+
+func (uv *userValidator) ByRemember(token string) (*User, error) {
+	rememberHash := uv.hmac.Hash(token)
+	return uv.UserDB.ByRemember(rememberHash)
 }
