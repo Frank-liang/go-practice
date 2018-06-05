@@ -112,6 +112,17 @@ type userGorm struct {
 	db *gorm.DB
 }
 
+type userValFn func(*User) error
+
+func runUserValFns(user *User, fns ...userValFn) error {
+	for _, fn := range fns {
+		if err := fn(user); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (ug *userGorm) ByID(id uint) (*User, error) {
 	var user User
 	db := ug.db.Where("id = ?", id)
@@ -143,7 +154,14 @@ func (ug *userGorm) ByRemember(rememberHash string) (*User, error) {
 	return &user, nil
 }
 
-func (uv *userValidator) Create(user *User) error {
+// bcryptPassword will hash a user's password with an
+// app-wide pepper and bcrypt, which salts for us.
+func (uv *userValidator) bcryptPassword(user *User) error {
+	if user.Password == "" {
+		// We DO NOT need to run this if the password
+		// hasn't been changed.
+		return nil
+	}
 	pwBytes := []byte(user.Password + userPwPepper)
 	hashedBytes, err := bcrypt.GenerateFromPassword(
 		pwBytes, bcrypt.DefaultCost)
@@ -152,6 +170,15 @@ func (uv *userValidator) Create(user *User) error {
 	}
 	user.PasswordHash = string(hashedBytes)
 	user.Password = ""
+	return nil
+}
+
+func (uv *userValidator) Create(user *User) error {
+	if err := runUserValFns(user,
+		uv.bcryptPassword); err != nil {
+		return err
+	}
+
 	if user.Remember == "" {
 		token, err := rand.RememberToken()
 		if err != nil {
@@ -169,6 +196,10 @@ func (ug *userGorm) Create(user *User) error {
 
 // Update will hash a remember token if it is provided.
 func (uv *userValidator) Update(user *User) error {
+	if err := runUserValFns(user,
+		uv.bcryptPassword); err != nil {
+		return err
+	}
 	if user.Remember != "" {
 		user.RememberHash = uv.hmac.Hash(user.Remember)
 	}
