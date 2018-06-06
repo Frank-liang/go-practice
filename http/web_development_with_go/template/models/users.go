@@ -16,6 +16,7 @@ var (
 	ErrInvalidID       = errors.New("models: ID provided was invalid")
 	userPwPepper       = "secret-random-string"
 	ErrInvalidPassword = errors.New("models: incorrect password provided")
+	ErrEmailRequired   = errors.New("modeles: email address is required")
 )
 
 const hmacSecretKey = "secret-hmac-key"
@@ -148,6 +149,13 @@ func (uv *userValidator) normalizeEmail(user *User) error {
 	return nil
 }
 
+func (uv *userValidator) requireEmail(user *User) error {
+	if user.Email == "" {
+		return ErrEmailRequired
+	}
+	return nil
+}
+
 func (uv *userValidator) ByEmail(email string) (*User, error) {
 	user := User{
 		Email: email,
@@ -203,7 +211,8 @@ func (uv *userValidator) Create(user *User) error {
 		uv.bcryptPassword,
 		uv.setRememberIfUnset,
 		uv.hmacRemember,
-		uv.normalizeEmail)
+		uv.normalizeEmail,
+		uv.requireEmail)
 	if err != nil {
 		return err
 	}
@@ -220,7 +229,8 @@ func (uv *userValidator) Update(user *User) error {
 	err := runUserValFns(user,
 		uv.bcryptPassword,
 		uv.hmacRemember,
-		uv.normalizeEmail)
+		uv.normalizeEmail,
+		uv.requireEmail)
 	if err != nil {
 		return err
 	}
