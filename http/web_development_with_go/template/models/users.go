@@ -182,16 +182,9 @@ func (uv *userValidator) bcryptPassword(user *User) error {
 }
 
 func (uv *userValidator) Create(user *User) error {
-	if user.Remember == "" {
-		token, err := rand.RememberToken()
-		if err != nil {
-			return err
-		}
-		user.Remember = token
-	}
-
 	err := runUserValFns(user,
 		uv.bcryptPassword,
+		uv.setRememberIfUnset,
 		uv.hmacRemember)
 	if err != nil {
 		return err
@@ -221,8 +214,11 @@ func (ug *userGorm) Update(user *User) error {
 
 // Delete will delete the user with the provided ID
 func (uv *userValidator) Delete(id uint) error {
-	if id == 0 {
-		return ErrInvalidID
+	var user User
+	user.ID = id
+	err := runUserValFns(&user, uv.idGreaterThan(0))
+	if err != nil {
+		return err
 	}
 	return uv.UserDB.Delete(id)
 }
@@ -230,6 +226,15 @@ func (uv *userValidator) Delete(id uint) error {
 func (ug *userGorm) Delete(id uint) error {
 	user := User{Model: gorm.Model{ID: id}}
 	return ug.db.Delete(&user).Error
+}
+
+func (uv *userValidator) idGreaterThan(n uint) userValFn {
+	return userValFn(func(user *User) error {
+		if user.ID <= n {
+			return ErrInvalidID
+		}
+		return nil
+	})
 }
 
 func (ug *userGorm) Close() error {
@@ -296,4 +301,16 @@ func (uv *userValidator) ByRemember(token string) (*User, error) {
 		return nil, err
 	}
 	return uv.UserDB.ByRemember(user.RememberHash)
+}
+
+func (uv *userValidator) setRememberIfUnset(user *User) error {
+	if user.Remember != "" {
+		return nil
+	}
+	token, err := rand.RememberToken()
+	if err != nil {
+		return err
+	}
+	user.Remember = token
+	return nil
 }
