@@ -2,6 +2,7 @@ package models
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/Frank-liang/go/http/web_development_with_go/template/hash"
 	"github.com/Frank-liang/go/http/web_development_with_go/template/rand"
@@ -141,6 +142,23 @@ func (ug *userGorm) ByID(id uint) (*User, error) {
 	return &user, nil
 }
 
+func (uv *userValidator) normalizeEmail(user *User) error {
+	user.Email = strings.ToLower(user.Email)
+	user.Email = strings.TrimSpace(user.Email)
+	return nil
+}
+
+func (uv *userValidator) ByEmail(email string) (*User, error) {
+	user := User{
+		Email: email,
+	}
+	err := runUserValFns(&user, uv.normalizeEmail)
+	if err != nil {
+		return nil, err
+	}
+	return uv.UserDB.ByEmail(user.Email)
+}
+
 func (ug *userGorm) ByEmail(email string) (*User, error) {
 	var user User
 	db := ug.db.Where("email = ?", email)
@@ -152,7 +170,6 @@ func (ug *userGorm) ByEmail(email string) (*User, error) {
 // and returns that user. This method expects the remember
 // token to already be hashed.
 // Errors are the same as ByEmail.
-
 func (ug *userGorm) ByRemember(rememberHash string) (*User, error) {
 	var user User
 	err := first(ug.db.Where("remember_hash = ?", rememberHash), &user)
@@ -185,7 +202,8 @@ func (uv *userValidator) Create(user *User) error {
 	err := runUserValFns(user,
 		uv.bcryptPassword,
 		uv.setRememberIfUnset,
-		uv.hmacRemember)
+		uv.hmacRemember,
+		uv.normalizeEmail)
 	if err != nil {
 		return err
 	}
@@ -201,7 +219,8 @@ func (ug *userGorm) Create(user *User) error {
 func (uv *userValidator) Update(user *User) error {
 	err := runUserValFns(user,
 		uv.bcryptPassword,
-		uv.hmacRemember)
+		uv.hmacRemember,
+		uv.normalizeEmail)
 	if err != nil {
 		return err
 	}
