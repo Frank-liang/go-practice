@@ -2,6 +2,7 @@ package models
 
 import (
 	"errors"
+	"regexp"
 	"strings"
 
 	"github.com/Frank-liang/go/http/web_development_with_go/template/hash"
@@ -17,6 +18,7 @@ var (
 	userPwPepper       = "secret-random-string"
 	ErrInvalidPassword = errors.New("models: incorrect password provided")
 	ErrEmailRequired   = errors.New("modeles: email address is required")
+	ErrEmailInvalid    = errors.New("models: email address is not valid")
 )
 
 const hmacSecretKey = "secret-hmac-key"
@@ -77,10 +79,7 @@ func NewUserService(conectionInfo string) (UserService, error) {
 		return nil, err
 	}
 	hmac := hash.NewHMAC(hmacSecretKey)
-	uv := &userValidator{
-		hmac:   hmac,
-		UserDB: ug,
-	}
+	uv := newUserValidator(ug, hmac)
 	return &userService{
 		UserDB: uv,
 	}, nil
@@ -94,7 +93,8 @@ type userService struct {
 
 type userValidator struct {
 	UserDB
-	hmac hash.HMAC
+	hmac       hash.HMAC
+	emailRegex *regexp.Regexp
 }
 
 var _ UserDB = &userGorm{}
@@ -115,6 +115,15 @@ type userGorm struct {
 }
 
 type userValFn func(*User) error
+
+func newUserValidator(udb UserDB, hmac hash.HMAC) *userValidator {
+	return &userValidator{
+		UserDB: udb,
+		hmac:   hmac,
+		emailRegex: regexp.MustCompile(
+			`^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,16}$`),
+	}
+}
 
 func (uv *userValidator) hmacRemember(user *User) error {
 	if user.Remember == "" {
@@ -141,6 +150,16 @@ func (ug *userGorm) ByID(id uint) (*User, error) {
 		return nil, err
 	}
 	return &user, nil
+}
+
+func (uv *userValidator) emailFormat(user *User) error {
+	if user.Email == "" {
+		return nil
+	}
+	if !uv.emailRegex.MatchString(user.Email) {
+		return ErrEmailInvalid
+	}
+	return nil
 }
 
 func (uv *userValidator) normalizeEmail(user *User) error {
@@ -212,7 +231,8 @@ func (uv *userValidator) Create(user *User) error {
 		uv.setRememberIfUnset,
 		uv.hmacRemember,
 		uv.normalizeEmail,
-		uv.requireEmail)
+		uv.requireEmail,
+		uv.emailFormat)
 	if err != nil {
 		return err
 	}
@@ -230,7 +250,8 @@ func (uv *userValidator) Update(user *User) error {
 		uv.bcryptPassword,
 		uv.hmacRemember,
 		uv.normalizeEmail,
-		uv.requireEmail)
+		uv.requireEmail,
+		uv.emailFormat)
 	if err != nil {
 		return err
 	}
