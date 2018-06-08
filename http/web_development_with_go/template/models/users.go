@@ -21,6 +21,7 @@ var (
 	ErrEmailTaken        = errors.New("models: email address is already taken")
 	ErrPasswordIncorrect = errors.New("models: incorrect password provided")
 	ErrPasswordTooShort  = errors.New("models: password must be at least 8 character long")
+	ErrPasswordRequired  = errors.New("models: password is required")
 )
 
 const (
@@ -233,6 +234,20 @@ func (ug *userGorm) ByRemember(rememberHash string) (*User, error) {
 	return &user, nil
 }
 
+func (uv *userValidator) passwordRequired(user *User) error {
+	if user.Password == "" {
+		return ErrPasswordRequired
+	}
+	return nil
+}
+
+func (uv *userValidator) PasswordHashRequired(user *User) error {
+	if user.PasswordHash == "" {
+		return ErrPasswordRequired
+	}
+	return nil
+}
+
 func (uv *userValidator) passwordMinLength(user *User) error {
 	if user.Password == "" {
 		return nil
@@ -240,6 +255,7 @@ func (uv *userValidator) passwordMinLength(user *User) error {
 	if len(user.Password) < 8 {
 		return ErrPasswordTooShort
 	}
+	return nil
 }
 
 // bcryptPassword will hash a user's password with an
@@ -263,8 +279,10 @@ func (uv *userValidator) bcryptPassword(user *User) error {
 
 func (uv *userValidator) Create(user *User) error {
 	err := runUserValFns(user,
+		uv.passwordRequired,
 		uv.passwordMinLength,
 		uv.bcryptPassword,
+		uv.PasswordHashRequired,
 		uv.setRememberIfUnset,
 		uv.hmacRemember,
 		uv.normalizeEmail,
@@ -288,6 +306,7 @@ func (uv *userValidator) Update(user *User) error {
 		uv.passwordMinLength,
 		uv.bcryptPassword,
 		uv.hmacRemember,
+		uv.PasswordHashRequired,
 		uv.normalizeEmail,
 		uv.requireEmail,
 		uv.emailFormat,
