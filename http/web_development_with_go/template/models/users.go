@@ -20,6 +20,7 @@ var (
 	ErrEmailInvalid      = errors.New("models: email address is not valid")
 	ErrEmailTaken        = errors.New("models: email address is already taken")
 	ErrPasswordIncorrect = errors.New("models: incorrect password provided")
+	ErrPasswordTooShort  = errors.New("models: password must be at least 8 character long")
 )
 
 const (
@@ -232,6 +233,15 @@ func (ug *userGorm) ByRemember(rememberHash string) (*User, error) {
 	return &user, nil
 }
 
+func (uv *userValidator) passwordMinLength(user *User) error {
+	if user.Password == "" {
+		return nil
+	}
+	if len(user.Password) < 8 {
+		return ErrPasswordTooShort
+	}
+}
+
 // bcryptPassword will hash a user's password with an
 // app-wide pepper and bcrypt, which salts for us.
 func (uv *userValidator) bcryptPassword(user *User) error {
@@ -253,6 +263,7 @@ func (uv *userValidator) bcryptPassword(user *User) error {
 
 func (uv *userValidator) Create(user *User) error {
 	err := runUserValFns(user,
+		uv.passwordMinLength,
 		uv.bcryptPassword,
 		uv.setRememberIfUnset,
 		uv.hmacRemember,
@@ -274,6 +285,7 @@ func (ug *userGorm) Create(user *User) error {
 // Update will hash a remember token if it is provided.
 func (uv *userValidator) Update(user *User) error {
 	err := runUserValFns(user,
+		uv.passwordMinLength,
 		uv.bcryptPassword,
 		uv.hmacRemember,
 		uv.normalizeEmail,
