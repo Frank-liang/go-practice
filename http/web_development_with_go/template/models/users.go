@@ -22,6 +22,7 @@ var (
 	ErrPasswordIncorrect = errors.New("models: incorrect password provided")
 	ErrPasswordTooShort  = errors.New("models: password must be at least 8 character long")
 	ErrPasswordRequired  = errors.New("models: password is required")
+	ErrRememberTooShort  = errors.New("models: remember token must be at least 32 bytes")
 )
 
 const (
@@ -234,6 +235,27 @@ func (ug *userGorm) ByRemember(rememberHash string) (*User, error) {
 	return &user, nil
 }
 
+func (uv *userValidator) rememberMinBytes(user *User) error {
+	if user.Remember == "" {
+		return nil
+	}
+	n, err := rand.NBytes(user.Remember)
+	if err != nil {
+		return err
+	}
+	if n < 32 {
+		return ErrRememberTooShort
+	}
+	return nil
+}
+
+func (uv *userValidator) rememberHashRequired(user *User) error {
+	if user.RememberHash == "" {
+		return ErrRemberRequired
+	}
+	return nil
+}
+
 func (uv *userValidator) passwordRequired(user *User) error {
 	if user.Password == "" {
 		return ErrPasswordRequired
@@ -284,7 +306,9 @@ func (uv *userValidator) Create(user *User) error {
 		uv.bcryptPassword,
 		uv.PasswordHashRequired,
 		uv.setRememberIfUnset,
+		uv.rememberMinBytes,
 		uv.hmacRemember,
+		uv.rememberHashRequired,
 		uv.normalizeEmail,
 		uv.requireEmail,
 		uv.emailFormat,
@@ -305,8 +329,10 @@ func (uv *userValidator) Update(user *User) error {
 	err := runUserValFns(user,
 		uv.passwordMinLength,
 		uv.bcryptPassword,
-		uv.hmacRemember,
 		uv.PasswordHashRequired,
+		uv.rememberMinBytes,
+		uv.hmacRemember,
+		uv.rememberHashRequired,
 		uv.normalizeEmail,
 		uv.requireEmail,
 		uv.emailFormat,
