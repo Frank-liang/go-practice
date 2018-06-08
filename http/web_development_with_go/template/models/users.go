@@ -19,6 +19,7 @@ var (
 	ErrInvalidPassword = errors.New("models: incorrect password provided")
 	ErrEmailRequired   = errors.New("modeles: email address is required")
 	ErrEmailInvalid    = errors.New("models: email address is not valid")
+	ErrEmailTaken      = errors.New("models: email address is already taken")
 )
 
 const hmacSecretKey = "secret-hmac-key"
@@ -150,6 +151,28 @@ func (ug *userGorm) ByID(id uint) (*User, error) {
 		return nil, err
 	}
 	return &user, nil
+}
+
+func (uv *userValidator) emailIsAvail(user *User) error {
+	existing, err := uv.ByEmail(user.Email)
+	if err == ErrNotFound {
+		// Email address is available if we don't find
+		// a user with that email address.
+		return nil
+	}
+	// We can't continue our validation without a successful
+	// query, so if we get any error other than ErrNotFound we
+	// should return it.
+	if err != nil {
+		return err
+	}
+	// If we get here that means we found a user w/ this email
+	// address, so we need to see if this is the same user we
+	// are updating, or if we have a conflict.
+	if user.ID != existing.ID {
+		return ErrEmailTaken
+	}
+	return nil
 }
 
 func (uv *userValidator) emailFormat(user *User) error {
