@@ -13,16 +13,19 @@ import (
 )
 
 var (
-	ErrNotFound        = errors.New("models: resource not found")
-	ErrInvalidID       = errors.New("models: ID provided was invalid")
-	userPwPepper       = "secret-random-string"
-	ErrInvalidPassword = errors.New("models: incorrect password provided")
-	ErrEmailRequired   = errors.New("modeles: email address is required")
-	ErrEmailInvalid    = errors.New("models: email address is not valid")
-	ErrEmailTaken      = errors.New("models: email address is already taken")
+	ErrNotFound          = errors.New("models: resource not found")
+	ErrIDInvalid         = errors.New("models: ID provided was invalid")
+	ErrInvalidPassword   = errors.New("models: incorrect password provided")
+	ErrEmailRequired     = errors.New("modeles: email address is required")
+	ErrEmailInvalid      = errors.New("models: email address is not valid")
+	ErrEmailTaken        = errors.New("models: email address is already taken")
+	ErrPasswordIncorrect = errors.New("models: incorrect password provided")
 )
 
-const hmacSecretKey = "secret-hmac-key"
+const (
+	hmacSecretKey = "secret-hmac-key"
+	userPwPepper  = "secret-random-string"
+)
 
 // UserDB is used to interact with the users database.
 //
@@ -58,7 +61,7 @@ type UserService interface {
 	// password are correct. If they are correct, the user
 	// corresponding to that email will be returned. Otherwise
 	// You will receive either:
-	// ErrNotFound, ErrInvalidPassword, or another error if
+	// ErrNotFound, ErrPasswordIncorrect, or another error if
 	// something goes wrong.
 	Authenticate(email, password string) (*User, error)
 	UserDB
@@ -255,7 +258,8 @@ func (uv *userValidator) Create(user *User) error {
 		uv.hmacRemember,
 		uv.normalizeEmail,
 		uv.requireEmail,
-		uv.emailFormat)
+		uv.emailFormat,
+		uv.emailIsAvail)
 	if err != nil {
 		return err
 	}
@@ -274,7 +278,8 @@ func (uv *userValidator) Update(user *User) error {
 		uv.hmacRemember,
 		uv.normalizeEmail,
 		uv.requireEmail,
-		uv.emailFormat)
+		uv.emailFormat,
+		uv.emailIsAvail)
 	if err != nil {
 		return err
 	}
@@ -304,7 +309,7 @@ func (ug *userGorm) Delete(id uint) error {
 func (uv *userValidator) idGreaterThan(n uint) userValFn {
 	return userValFn(func(user *User) error {
 		if user.ID <= n {
-			return ErrInvalidID
+			return ErrIDInvalid
 		}
 		return nil
 	})
@@ -345,6 +350,16 @@ func (ug *userGorm) DestructiveReset() error {
 	return ug.AutoMigrate()
 }
 
+// Authenticate can be used to authenticate a user with the
+// provided email address and password.
+// If the email address provided is invalid, this will return
+// nil, ErrNotFound
+// If the password provided is invalid, this will return
+// nil, ErrPasswordIncorrect
+// If the email and password are both valid, this will return
+// user, nil
+// Otherwise if another error is encountered this will return
+// nil, error
 func (ug *userService) Authenticate(email, password string) (*User, error) {
 	foundUser, err := ug.ByEmail(email)
 	if err != nil {
