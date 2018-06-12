@@ -86,6 +86,8 @@ func (u *Users) Login(w http.ResponseWriter, r *http.Request) {
 		switch err {
 		case models.ErrNotFound:
 			vd.AlertError("No user exists with that email address")
+		case models.ErrEmailRequired:
+			vd.AlertError("Incorrect password provided")
 		default:
 			vd.SetAlert(err)
 		}

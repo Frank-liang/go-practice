@@ -1,7 +1,6 @@
 package models
 
 import (
-	"errors"
 	"regexp"
 	"strings"
 
@@ -32,11 +31,12 @@ const (
 		"is required"
 	ErrRememberTooShort modelError = "models: remember token " +
 		"must be at least 32 bytes"
+	ErrInvalidPassword modelError = "models: incorrect password provided"
 )
 
-var (
-	ErrInvalidPassword = errors.New("models: incorrect password provided")
-)
+//var (
+//	ErrInvalidPassword = errors.New("models: incorrect password provided")
+//)
 
 const (
 	hmacSecretKey = "secret-hmac-key"
