@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/Frank-liang/go/http/web_development_with_go/template/models"
@@ -38,9 +39,16 @@ func (u *Users) New(w http.ResponseWriter, r *http.Request) {
 
 //POST /signup
 func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
+	var vd views.Data
 	var form SignupForm
 	if err := parseForm(r, &form); err != nil {
-		panic(err)
+		log.Panicln(err)
+		vd.Alert = &views.Alert{
+			Level:   views.AlertLvlError,
+			Message: views.AlertMsgGeneric,
+		}
+		u.NewView.Render(w, vd)
+		return
 	}
 	user := models.User{
 		Name:     form.Name,
@@ -49,13 +57,17 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := u.us.Create(&user); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		vd.Alert = &views.Alert{
+			Level:   views.AlertLvlError,
+			Message: err.Error(),
+		}
+		u.NewView.Render(w, vd)
 		return
 	}
 	//fmt.Fprintln(w, "User is", user)
 	err := u.signIn(w, &user)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Redirect(w, r, "/login", http.StatusFound)
 		return
 	}
 }
@@ -124,3 +136,18 @@ func (u *Users) signIn(w http.ResponseWriter, user *models.User) error {
 	http.SetCookie(w, &cookie)
 	return nil
 }
+
+// Test for error handle
+//func (u *Users) New(w http.ResponseWriter, r *http.Request) {
+//	alert := views.Alert{
+//		Level:   views.AlertLvlSuccess,
+//		Message: "Successfully rendered a dynamic alert!",
+//	}
+//	data := views.Data{
+//		Alert: &alert,
+//		Yield: "this can be any data b/c its type is interface",
+//	}
+//	if err := u.NewView.Render(w, data); err != nil {
+//		panic(err)
+//	}
+//}

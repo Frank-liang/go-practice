@@ -23,6 +23,7 @@ var (
 	ErrPasswordTooShort  = errors.New("models: password must be at least 8 character long")
 	ErrPasswordRequired  = errors.New("models: password is required")
 	ErrRememberTooShort  = errors.New("models: remember token must be at least 32 bytes")
+	ErrRememberRequired  = errors.New("models: remember token is required")
 )
 
 const (
@@ -251,7 +252,7 @@ func (uv *userValidator) rememberMinBytes(user *User) error {
 
 func (uv *userValidator) rememberHashRequired(user *User) error {
 	if user.RememberHash == "" {
-		return ErrRemberRequired
+		return ErrRememberRequired
 	}
 	return nil
 }
