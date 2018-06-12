@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/Frank-liang/go/http/web_development_with_go/template/models"
@@ -42,11 +41,7 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
 	var vd views.Data
 	var form SignupForm
 	if err := parseForm(r, &form); err != nil {
-		log.Panicln(err)
-		vd.Alert = &views.Alert{
-			Level:   views.AlertLvlError,
-			Message: views.AlertMsgGeneric,
-		}
+		vd.SetAlert(err)
 		u.NewView.Render(w, vd)
 		return
 	}
@@ -57,10 +52,7 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := u.us.Create(&user); err != nil {
-		vd.Alert = &views.Alert{
-			Level:   views.AlertLvlError,
-			Message: err.Error(),
-		}
+		vd.SetAlert(err)
 		u.NewView.Render(w, vd)
 		return
 	}
