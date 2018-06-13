@@ -11,33 +11,24 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 )
 
-//var homeTemplate *template.Template
-//var contactTemplate *template.Template
-
 func main() {
-	/*var err error
-	homeTemplate, err = template.ParseFiles(
-		"views/home.gohtml",
-		"views/layouts/footer.gohtml")
+	MySQLInfo := fmt.Sprintf("go:go@tcp(localhost:3306)/go_web?charset=utf8&parseTime=true&loc=Local")
+	services, err := models.NewServices(MySQLInfo)
 	if err != nil {
 		panic(err)
 	}
-	contactTemplate, err = template.ParseFiles(
-		"views/contact.gohtml",
-		"views/layouts/footer.gohtml")
-	if err != nil {
-		panic(err)
-	}*/
-	MySQLInfo := fmt.Sprintf("go:go@tcp(localhost:3306)/go_web?charset=utf8&parseTime=true&loc=Local")
-	us, err := models.NewUserService(MySQLInfo)
+	defer services.Close()
+	services.AutoMigrate()
+	/*us, err := models.NewUserService(MySQLInfo)
 	if err != nil {
 		panic(err)
 	}
 	defer us.Close()
-	us.AutoMigrate()
+	us.AutoMigrate()*/
 
 	staticC := controllers.NewStatic()
-	usersC := controllers.NewUsers(us)
+	//usersC := controllers.NewUsers(us)
+	usersC := controllers.NewUsers(services.User)
 	r := mux.NewRouter()
 	r.Handle("/", staticC.Home).Methods("GET")
 	r.Handle("/contact", staticC.Contact).Methods("GET")
