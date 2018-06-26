@@ -2,6 +2,9 @@
 <div class="row">
   <div class="col-md-10 col-md-offset-1">
     <h2>Edit your gallery</h3>
+    <a href="/galleries/{{.ID}}">
+    View this gallery
+    </a>
     <hr>
   </div>
   <div class="col-md-12">
@@ -76,6 +79,34 @@
 {{end}}
 
 {{define "galleryImages"}}
-<p>Coming soon...</p>
+{{range .ImagesSplitN 6}}
+<div class="col-md-2">
+{{range .}}
+<a href="{{.Path}}">
+<img src="{{.Path}}" class="thumbnail">
+</a>
+{{template "deleteImageForm" .}}
+{{end}}
+</div>
+{{end}}
+<!--
+Normally styles in the middle of your code is bad,
+but for dev I think this is fine. We will fix it up
+when we deploy
+-->
+<style>
+.thumbnail {
+width: 100%;
+}
+</style>
 {{end}}
 
+
+{{define "deleteImageForm"}}
+<form action="/galleries/{{.GalleryID}}/images/{{.Filename}}/delete"
+method="POST">
+<button type="submit" class="btn btn-default btn-delete">
+Delete
+</button>
+</form>
+{{end}}

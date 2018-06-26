@@ -6,6 +6,8 @@ import (
 	"io"
 	"net/http"
 	"path/filepath"
+
+	"github.com/Frank-liang/go/lenslocked.com/context"
 )
 
 var (
@@ -33,16 +35,21 @@ type View struct {
 	Layout   string
 }
 
-func (v *View) Render(w http.ResponseWriter, data interface{}) {
+func (v *View) Render(w http.ResponseWriter, r *http.Request, data interface{}) {
 	w.Header().Set("Content-Type", "text/html")
-	switch data.(type) {
+	var vd Data
+	switch d := data.(type) {
 	case Data:
-		// do nothing
+		// We need to do this so we can access the data in a var
+		// with the type Data.
+		vd = d
 	default:
-		data = Data{
+		vd = Data{
 			Yield: data,
 		}
 	}
+	// Lookup and set the user to the User field
+	vd.User = context.User(r.Context())
 	var buf bytes.Buffer
 	err := v.Template.ExecuteTemplate(&buf, v.Layout, data)
 	if err != nil {
@@ -55,7 +62,7 @@ func (v *View) Render(w http.ResponseWriter, data interface{}) {
 }
 
 func (v *View) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	v.Render(w, nil)
+	v.Render(w, r, nil)
 }
 
 func layoutFiles() []string {

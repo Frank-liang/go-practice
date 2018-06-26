@@ -31,7 +31,7 @@ type Users struct {
 //
 // GET /signup
 func (u *Users) New(w http.ResponseWriter, r *http.Request) {
-	u.NewView.Render(w, nil)
+	u.NewView.Render(w, r, nil)
 }
 
 type SignupForm struct {
@@ -49,7 +49,7 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
 	var form SignupForm
 	if err := parseForm(r, &form); err != nil {
 		vd.SetAlert(err)
-		u.NewView.Render(w, vd)
+		u.NewView.Render(w, r, vd)
 		return
 	}
 
@@ -60,7 +60,7 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := u.us.Create(&user); err != nil {
 		vd.SetAlert(err)
-		u.NewView.Render(w, vd)
+		u.NewView.Render(w, r, vd)
 		return
 	}
 
@@ -71,7 +71,7 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Redirect to the cookie test page to test the cookie
-	http.Redirect(w, r, "/cookietest", http.StatusFound)
+	http.Redirect(w, r, "/galleries", http.StatusFound)
 }
 
 type LoginForm struct {
@@ -88,7 +88,7 @@ func (u *Users) Login(w http.ResponseWriter, r *http.Request) {
 	var form LoginForm
 	if err := parseForm(r, &form); err != nil {
 		vd.SetAlert(err)
-		u.LoginView.Render(w, vd)
+		u.LoginView.Render(w, r, vd)
 		return
 	}
 	user, err := u.us.Authenticate(form.Email, form.Password)
@@ -99,17 +99,17 @@ func (u *Users) Login(w http.ResponseWriter, r *http.Request) {
 		default:
 			vd.SetAlert(err)
 		}
-		u.LoginView.Render(w, vd)
+		u.LoginView.Render(w, r, vd)
 		return
 	}
 
 	err = u.signIn(w, user)
 	if err != nil {
 		vd.SetAlert(err)
-		u.LoginView.Render(w, vd)
+		u.LoginView.Render(w, r, vd)
 		return
 	}
-	http.Redirect(w, r, "/cookietest", http.StatusFound)
+	http.Redirect(w, r, "/galleries", http.StatusFound)
 }
 
 // CookieTest is used to display cookies set on the current user

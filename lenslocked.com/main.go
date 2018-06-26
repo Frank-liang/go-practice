@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/Frank-liang/go/lenslocked.com/controllers"
+	"github.com/Frank-liang/go/lenslocked.com/middleware"
 	"github.com/Frank-liang/go/lenslocked.com/models"
 	"github.com/gorilla/mux"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
@@ -21,11 +22,20 @@ func main() {
 	defer services.Close()
 	services.AutoMigrate()
 
+	r := mux.NewRouter()
 	staticC := controllers.NewStatic()
 	usersC := controllers.NewUsers(services.User)
-	galleriesC := controllers.NewGalleries(services.Gallery)
+	galleriesC := controllers.NewGalleries(services.Gallery, services.Image, r)
 
-	r := mux.NewRouter()
+	userMw := middleware.User{
+		UserService: services.User,
+	}
+	requireUserMw := middleware.RequireUser{}
+	// galleriesC.New is an http.Handler, so we use Apply
+	//newGallery := requireUserMw.Apply(galleriesC.New)
+	// galleriecsC.Create is an http.HandlerFunc, so we use ApplyFn
+	//createGallery := requireUserMw.ApplyFn(galleriesC.Create)
+
 	r.Handle("/", staticC.Home).Methods("GET")
 	r.Handle("/contact", staticC.Contact).Methods("GET")
 	r.HandleFunc("/signup", usersC.New).Methods("GET")
@@ -34,9 +44,18 @@ func main() {
 	r.HandleFunc("/login", usersC.Login).Methods("POST")
 	r.HandleFunc("/cookietest", usersC.CookieTest).Methods("GET")
 	// Gallery routes
-	r.Handle("/galleries/new", galleriesC.New).Methods("GET")
-	r.HandleFunc("/galleries", galleriesC.Create).Methods("POST")
+	r.Handle("/galleries", requireUserMw.ApplyFn(galleriesC.Index)).Methods("GET").Name(controllers.IndexGalleries)
+	r.Handle("/galleries/new", requireUserMw.Apply(galleriesC.New)).Methods("GET")
+	r.Handle("/galleries", requireUserMw.ApplyFn(galleriesC.Create)).Methods("POST")
+	r.HandleFunc("/galleries/{id:[0-9]+}", galleriesC.Show).Methods("GET").Name(controllers.ShowGallery)
+	r.HandleFunc("/galleries/{id:[0-9]+}/edit", requireUserMw.ApplyFn(galleriesC.Edit)).Methods("GET").Name(controllers.EditGallery)
+	r.HandleFunc("/galleries/{id:[0-9]+}/update", requireUserMw.ApplyFn(galleriesC.Update)).Methods("POST")
+	r.HandleFunc("/galleries/{id:[0-9]+}/delete", requireUserMw.ApplyFn(galleriesC.Delete)).Methods("POST")
+	r.HandleFunc("/galleries/{id:[0-9]+}/images", requireUserMw.ApplyFn(galleriesC.ImageUpload)).Methods("POST")
+	r.HandleFunc("/galleries/{id:[0-9]+}/images/{filename}/delete", requireUserMw.ApplyFn(galleriesC.ImageDelete)).Methods("POST")
+	//Image routes
+	imageHandler := http.FileServer(http.Dir("./images/"))
+	r.PathPrefix("/images/").Handler(http.StripPrefix("/images/", imageHandler))
 
-	fmt.Println("Starting the server on :3002...")
-	http.ListenAndServe(":3332", r)
+	http.ListenAndServe(":3332", userMw.Apply(r))
 }
