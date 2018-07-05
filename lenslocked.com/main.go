@@ -56,6 +56,6 @@ func main() {
 	//Image routes
 	imageHandler := http.FileServer(http.Dir("./images/"))
 	r.PathPrefix("/images/").Handler(http.StripPrefix("/images/", imageHandler))
-
+	fmt.Println("The server is on 3332: ")
 	http.ListenAndServe(":3332", userMw.Apply(r))
 }

@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/Frank-liang/go/lenslocked.com/context"
 	"github.com/Frank-liang/go/lenslocked.com/models"
@@ -25,6 +26,16 @@ func (mw *User) ApplyFn(next http.HandlerFunc) http.HandlerFunc {
 	// but we also need to convert it into an
 	// http.HandlerFunc
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		path := r.URL.Path
+		// If the user is requesting a static asset or image
+		// we will not need to lookup the current user so we skip
+		// doing that.
+		if strings.HasPrefix(path, "/assets/") ||
+			strings.HasPrefix(path, "/images/") {
+			next(w, r)
+			return
+		}
+
 		// TODO: Check if a user is logged in.
 		// If so, call next(w, r)
 		// If not, http.Redirect to "/login"

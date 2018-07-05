@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"io"
 	"net/http"
+	"net/url"
 	"path/filepath"
 
 	"github.com/Frank-liang/go/lenslocked.com/context"
@@ -20,10 +21,19 @@ func NewView(layout string, files ...string) *View {
 	addTemplatePath(files)
 	addTemplateExt(files)
 	files = append(files, layoutFiles()...)
-	t, err := template.ParseFiles(files...)
+	//	t, err := template.ParseFiles(files...)
+	//	if err != nil {
+	//		panic(err)
+	//	}
+	t, err := template.New("").Funcs(template.FuncMap{
+		"pathEscape": func(s string) string {
+			return url.PathEscape(s)
+		},
+	}).ParseFiles(files...)
 	if err != nil {
 		panic(err)
 	}
+
 	return &View{
 		Template: t,
 		Layout:   layout,
