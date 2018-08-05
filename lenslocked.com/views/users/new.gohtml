@@ -7,7 +7,10 @@
         <h3 class="panel-title">Sign Up Now!</h3>
       </div>
       <div class="panel-body">
-        {{template "signupForm"}}
+        {{template "signupForm" .}}
+      </div>
+      <div class="panel-footer">
+      <a href="/login">Already have an account?</a>
       </div>
     </div>
   </div>
@@ -18,12 +21,12 @@
 <form action="/signup" method="POST">
   <div class="form-group">
     <label for="name">Name</label>
-    <input type="text" name="name" class="form-control" id="name" placeholder="Your full name">
+    <input type="text" name="name" class="form-control" id="name" placeholder="Your full name" value="{{.Name}}">
   </div>
   <div class="form-group">
     <label for="email">Email address</label>
     <input type="email" name="email" class="form-control"
-      id="email" placeholder="Email">
+      id="email" placeholder="Email" value="{{.Email}}">
   </div>
   <div class="form-group">
     <label for="password">Password</label>
