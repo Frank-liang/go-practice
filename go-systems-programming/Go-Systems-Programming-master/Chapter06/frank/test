@@ -1,0 +1,8 @@
+Mihalis Tsoukalos!
+ 
+ # command-line-arguments
+ The Text() method returns the latest token from the Scan() method as a string,
+ which in this case will be a line. However, if you ever get strange results
+ while trying to read a file line by line, it will most likely be the way your file
+ ends a line, which is usually the case with text files coming from Windows
+ machines.
