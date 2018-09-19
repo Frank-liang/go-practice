@@ -1,0 +1,1 @@
+Panic is similar to throwing exception like other language. Generally when a panic is called then the normal execution flow is stops immediately, but the deffered functions are executed normally. It is a built-in function in golang.
