@@ -2,6 +2,7 @@ package views
 
 import (
 	"bytes"
+	"fmt"
 	"html/template"
 	"io"
 	"net/http"
@@ -43,6 +44,7 @@ func NewView(layout string, files ...string) *View {
 	addTemplatePath(files)
 	addTemplateExt(files)
 	files = append(files, layoutFiles()...)
+	fmt.Println(files)
 	t, err := template.ParseFiles(files...)
 	if err != nil {
 		panic(err)
