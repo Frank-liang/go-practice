@@ -1,5 +1,6 @@
 package main
 
+//互斥锁主要是应用在写多的环境，读写锁用在读多的环境
 import (
 	"fmt"
 	"sync"
