@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/go-redis/redis"
@@ -53,8 +52,4 @@ func (client *redisClient) setKey(key string, value interface{}, expiration time
 		return err
 	}
 	return nil
-}
-
-func main() {
-	fmt.Println("ok")
 }
