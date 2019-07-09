@@ -4,8 +4,8 @@ import "fmt"
 
 func main() {
 	counter := newCounter()
-	fmt.Println(newCounter())
-	fmt.Println(newCounter())
+	fmt.Println(counter())
+	fmt.Println(counter())
 }
 
 func newCounter() func() int {
